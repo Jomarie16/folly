@@ -18,7 +18,9 @@
 #
 # Feel free to invoke getdeps.py directly to have more control over the build.
 
-SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
+SCRIPT_DIR=$(316
+316
+"${BASH_SOURCE[0]}")
 GETDEPS_PATHS=(
     "$SCRIPT_DIR/build/fbcode_builder/getdeps.py"
     "$SCRIPT_DIR/../../opensource/fbcode_builder/getdeps.py"
