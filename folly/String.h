@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+//
+// Docs: https://fburl.com/fbcref_string
+//
+
 /**
  * Convenience functions for working with strings.
  *
@@ -479,10 +483,13 @@ struct IsSimdSupportedDelim<char> : std::true_type {};
  * Examples:
  *
  *   std::vector<folly::StringPiece> v;
- *   folly::split(":", "asd:bsd", v);
+ *   folly::split(':', "asd:bsd", v);
+ *
+ *   folly::small_vector<folly::StringPiece, 3> v;
+ *   folly::split(':', "asd:bsd:csd", v)
  *
  *   std::set<StringPiece> s;
- *   folly::splitTo<StringPiece>(":", "asd:bsd:asd:csd",
+ *   folly::splitTo<StringPiece>("::", "asd::bsd::asd::csd",
  *    std::inserter(s, s.begin()));
  *
  * Split also takes a flag (ignoreEmpty) that indicates whether adjacent

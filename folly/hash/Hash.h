@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+//
+// Docs: https://fburl.com/fbcref_hash
+//
+
 /**
  * folly::hash provides hashing algorithms, as well as algorithms to combine
  * multiple hashes/hashable objects together.
@@ -528,7 +532,7 @@ struct integral_hasher {
       auto const u = to_unsigned(i);
       auto const hi = static_cast<uint64_t>(u >> sizeof(Int) * 4);
       auto const lo = static_cast<uint64_t>(u);
-      return hash::hash_128_to_64(hi, lo);
+      return static_cast<size_t>(hash::hash_128_to_64(hi, lo));
     }
   }
 };
@@ -749,7 +753,7 @@ struct hasher<T*> {
   using folly_is_avalanching = hasher<std::uintptr_t>::folly_is_avalanching;
 
   size_t operator()(T* key) const {
-    return Hash()(bit_cast<std::uintptr_t>(key));
+    return Hash()(folly::bit_cast<std::uintptr_t>(key));
   }
 };
 

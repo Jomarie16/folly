@@ -981,8 +981,9 @@ TEST(IoUringBackend, FileReadWrite) {
   auto tempFile = folly::test::TempFileUtil::getTempFile(kFileSize);
 
   int fd = ::open(tempFile.path().c_str(), O_DIRECT | O_RDWR);
-  SKIP_IF(fd == -1) << "Tempfile can't be opened with O_DIRECT: "
-                    << folly::errnoStr(errno);
+  if (fd == -1)
+    fd = ::open(tempFile.path().c_str(), O_RDWR);
+  SKIP_IF(fd == -1) << "Tempfile can't be opened: " << folly::errnoStr(errno);
   SCOPE_EXIT { ::close(fd); };
 
   auto* backendPtr = dynamic_cast<folly::IoUringBackend*>(evbPtr->getBackend());
@@ -1046,8 +1047,9 @@ TEST(IoUringBackend, FileReadvWritev) {
   auto tempFile = folly::test::TempFileUtil::getTempFile(kFileSize);
 
   int fd = ::open(tempFile.path().c_str(), O_DIRECT | O_RDWR);
-  SKIP_IF(fd == -1) << "Tempfile can't be opened with O_DIRECT: "
-                    << folly::errnoStr(errno);
+  if (fd == -1)
+    fd = ::open(tempFile.path().c_str(), O_RDWR);
+  SKIP_IF(fd == -1) << "Tempfile can't be opened: " << folly::errnoStr(errno);
   SCOPE_EXIT { ::close(fd); };
 
   auto* backendPtr = dynamic_cast<folly::IoUringBackend*>(evbPtr->getBackend());
@@ -1139,8 +1141,9 @@ TEST(IoUringBackend, FileReadMany) {
   auto tempFile = folly::test::TempFileUtil::getTempFile(kFileSize);
 
   int fd = ::open(tempFile.path().c_str(), O_DIRECT | O_RDWR);
-  SKIP_IF(fd == -1) << "Tempfile can't be opened with O_DIRECT: "
-                    << folly::errnoStr(errno);
+  if (fd == -1)
+    fd = ::open(tempFile.path().c_str(), O_RDWR);
+  SKIP_IF(fd == -1) << "Tempfile can't be opened: " << folly::errnoStr(errno);
   SCOPE_EXIT { ::close(fd); };
 
   auto* backendPtr = dynamic_cast<folly::IoUringBackend*>(evbPtr->getBackend());
@@ -1198,8 +1201,9 @@ TEST(IoUringBackend, FileWriteMany) {
   auto tempFile = folly::test::TempFileUtil::getTempFile(kFileSize);
 
   int fd = ::open(tempFile.path().c_str(), O_DIRECT | O_RDWR);
-  SKIP_IF(fd == -1) << "Tempfile can't be opened with O_DIRECT: "
-                    << folly::errnoStr(errno);
+  if (fd == -1)
+    fd = ::open(tempFile.path().c_str(), O_RDWR);
+  SKIP_IF(fd == -1) << "Tempfile can't be opened: " << folly::errnoStr(errno);
   SCOPE_EXIT { ::close(fd); };
 
   auto* backendPtr = dynamic_cast<folly::IoUringBackend*>(evbPtr->getBackend());
@@ -1519,14 +1523,14 @@ TEST(IoUringBackend, DeferTaskRun) {
   N* maybeLeaks = nullptr;
 
   std::unique_ptr<folly::IoUringBackend> backend;
-  std::async(std::launch::async, [&]() {
+  std::thread([&]() {
     backend = std::make_unique<folly::IoUringBackend>(
         folly::IoUringBackend::Options().setDeferTaskRun(true));
     backend->submitNow(*new N(doneA));
     backend->loopPoll();
     maybeLeaks = new N(doneB);
     backend->submitSoon(*maybeLeaks);
-  }).wait();
+  }).join();
   backend.reset();
   EXPECT_EQ(1, doneA.load());
   ASSERT_EQ(0, doneB.load()) << "could not run on other thread";
@@ -1605,81 +1609,6 @@ struct IoUringPollSQCQBackendProvider {
     }
   }
 };
-
-REGISTER_TYPED_TEST_SUITE_P(
-    EventBaseTest,
-    ReadEvent,
-    ReadPersist,
-    ReadImmediate,
-    WriteEvent,
-    WritePersist,
-    WriteImmediate,
-    ReadWrite,
-    WriteRead,
-    ReadWriteSimultaneous,
-    ReadWritePersist,
-    ReadPartial,
-    WritePartial,
-    DestroyingHandler,
-    RunAfterDelay,
-    RunAfterDelayDestruction,
-    BasicTimeouts,
-    ReuseTimeout,
-    RescheduleTimeout,
-    CancelTimeout,
-    DestroyingTimeout,
-    ScheduledFn,
-    ScheduledFnAt,
-    RunInThread,
-    RunInEventBaseThreadAndWait,
-    RunImmediatelyOrRunInEventBaseThreadAndWaitCross,
-    RunImmediatelyOrRunInEventBaseThreadAndWaitWithin,
-    RunImmediatelyOrRunInEventBaseThreadAndWaitNotLooping,
-    RunImmediatelyOrRunInEventBaseThreadCross,
-    RunImmediatelyOrRunInEventBaseThreadNotLooping,
-    RepeatedRunInLoop,
-    RunInLoopNoTimeMeasurement,
-    RunInLoopStopLoop,
-    RunPoolLoop,
-    messageAvailableException,
-    TryRunningAfterTerminate,
-    CancelRunInLoop,
-    LoopTermination,
-    CallbackOrderTest,
-    AlwaysEnqueueCallbackOrderTest,
-    IdleTime,
-    MaxLatencyUndamped,
-    UnsetMaxLatencyUndamped,
-    ThisLoop,
-    EventBaseThreadLoop,
-    EventBaseThreadName,
-    RunBeforeLoop,
-    RunBeforeLoopWait,
-    StopBeforeLoop,
-    RunCallbacksPreDestruction,
-    RunCallbacksOnDestruction,
-    LoopKeepAlive,
-    LoopKeepAliveInLoop,
-    LoopKeepAliveWithLoopForever,
-    LoopKeepAliveShutdown,
-    LoopKeepAliveAtomic,
-    LoopKeepAliveCast,
-    EventBaseObserver);
-
-REGISTER_TYPED_TEST_SUITE_P(
-    EventBaseTest1,
-    DrivableExecutorTest,
-    IOExecutorTest,
-    RequestContextTest,
-    CancelLoopCallbackRequestContextTest,
-    TestStarvation,
-    RunOnDestructionBasic,
-    RunOnDestructionCancelled,
-    RunOnDestructionAfterHandleDestroyed,
-    RunOnDestructionAddCallbackWithinCallback,
-    InternalExternalCallbackOrderTest,
-    pidCheck,
-    EventBaseExecutionObserver);
 
 // Instantiate the non registered fd tests
 INSTANTIATE_TYPED_TEST_SUITE_P(IoUring, EventBaseTest, IoUringBackendProvider);

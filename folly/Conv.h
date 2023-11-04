@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+//
+// Docs: https://fburl.com/fbcref_conv
+//
+
 /**
  * Conv provides the ubiquitous method `to<TargetType>(source)`, along with
  * a few other generic interfaces for converting objects to and from
@@ -203,7 +207,7 @@ namespace detail {
  */
 inline ConversionCode enforceWhitespaceErr(StringPiece sp) {
   for (auto c : sp) {
-    if (UNLIKELY(!std::isspace(c))) {
+    if (FOLLY_UNLIKELY(!std::isspace(c))) {
       return ConversionCode::NON_WHITESPACE_AFTER_END;
     }
   }
@@ -430,10 +434,7 @@ typename std::enable_if<std::is_convertible<Src, const char*>::value, size_t>::
     type
     estimateSpaceNeeded(Src value) {
   const char* c = value;
-  if (c) {
-    return folly::StringPiece(value).size();
-  };
-  return 0;
+  return c ? std::strlen(c) : 0;
 }
 
 template <class Src>
@@ -1343,11 +1344,11 @@ typename std::enable_if<
         (std::is_floating_point<Src>::value && is_integral_v<Tgt>),
     Expected<Tgt, ConversionCode>>::type
 convertTo(const Src& value) noexcept {
-  if (LIKELY(checkConversion<Tgt>(value))) {
+  if (FOLLY_LIKELY(checkConversion<Tgt>(value))) {
     Tgt result = static_cast<Tgt>(value);
-    if (LIKELY(checkConversion<Src>(result))) {
+    if (FOLLY_LIKELY(checkConversion<Src>(result))) {
       Src witness = static_cast<Src>(result);
-      if (LIKELY(value == witness)) {
+      if (FOLLY_LIKELY(value == witness)) {
         return result;
       }
     }
@@ -1461,7 +1462,7 @@ using ParseToResult = decltype(parseTo(StringPiece{}, std::declval<Tgt&>()));
 struct CheckTrailingSpace {
   Expected<Unit, ConversionCode> operator()(StringPiece sp) const {
     auto e = enforceWhitespaceErr(sp);
-    if (UNLIKELY(e != ConversionCode::SUCCESS)) {
+    if (FOLLY_UNLIKELY(e != ConversionCode::SUCCESS)) {
       return makeUnexpected(e);
     }
     return unit;

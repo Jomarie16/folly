@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+//
+// Docs: https://fburl.com/fbcref_range
+//
+
 /**
  * Range abstraction using a pair of iterators. It is not
  * similar to boost's range abstraction because an API identical
@@ -317,7 +321,7 @@ class Range {
       class T = Iter,
       typename detail::IsCharPointer<T>::const_type = 0>
   Range(const string<Alloc>& str, typename string<Alloc>::size_type startFrom) {
-    if (UNLIKELY(startFrom > str.size())) {
+    if (FOLLY_UNLIKELY(startFrom > str.size())) {
       throw_exception<std::out_of_range>("index out of range");
     }
     b_ = str.data() + startFrom;
@@ -332,7 +336,7 @@ class Range {
       const string<Alloc>& str,
       typename string<Alloc>::size_type startFrom,
       typename string<Alloc>::size_type size) {
-    if (UNLIKELY(startFrom > str.size())) {
+    if (FOLLY_UNLIKELY(startFrom > str.size())) {
       throw_exception<std::out_of_range>("index out of range");
     }
     b_ = str.data() + startFrom;
@@ -370,7 +374,7 @@ class Range {
   Range(Container const& container, typename Container::size_type startFrom) {
     auto const cdata = container.data();
     auto const csize = container.size();
-    if (UNLIKELY(startFrom > csize)) {
+    if (FOLLY_UNLIKELY(startFrom > csize)) {
       throw_exception<std::out_of_range>("index out of range");
     }
     b_ = cdata + startFrom;
@@ -392,7 +396,7 @@ class Range {
       typename Container::size_type size) {
     auto const cdata = container.data();
     auto const csize = container.size();
-    if (UNLIKELY(startFrom > csize)) {
+    if (FOLLY_UNLIKELY(startFrom > csize)) {
       throw_exception<std::out_of_range>("index out of range");
     }
     b_ = cdata + startFrom;
@@ -808,14 +812,14 @@ class Range {
   }
 
   void advance(size_type n) {
-    if (UNLIKELY(n > size())) {
+    if (FOLLY_UNLIKELY(n > size())) {
       throw_exception<std::out_of_range>("index out of range");
     }
     b_ += n;
   }
 
   void subtract(size_type n) {
-    if (UNLIKELY(n > size())) {
+    if (FOLLY_UNLIKELY(n > size())) {
       throw_exception<std::out_of_range>("index out of range");
     }
     e_ -= n;
@@ -825,7 +829,7 @@ class Range {
   // length characters (or until the end of the current range, whichever comes
   // first). Throws if first is past the end of the current range.
   Range subpiece(size_type first, size_type length = npos) const {
-    if (UNLIKELY(first > size())) {
+    if (FOLLY_UNLIKELY(first > size())) {
       throw_exception<std::out_of_range>("index out of range");
     }
 
